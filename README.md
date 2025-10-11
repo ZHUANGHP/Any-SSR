@@ -1,9 +1,6 @@
 # Any-SSR
 This is the official code for Any-SSR [Analytic Subspace Routing: How Recursive Least Squares Works in Continual Learning of Large Language Model](https://arxiv.org/abs/2503.13575)
 
-# Code
-Code will be available very soon!
-
 # Environment
 We recommend using the [Anaconda](https://anaconda.org/) to install the development environment.
 
