@@ -1,0 +1,1 @@
+train_lora.sh: line 50: srun: command not found
