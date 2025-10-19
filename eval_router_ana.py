@@ -166,10 +166,6 @@ def train():
     import numpy as np
 
     def eval_router(model, infer_dataloader, step):
-        # predicted_sequences = []
-        # sources_sequences = []
-        # ground_truths = []
-        # model.eval()
         fe_weight = torch.load(f'{router_weights_path}/step{step}_fe_weight.pth', map_location=model.device).to(torch.float16)
         classifier_weight = torch.load(f'{router_weights_path}/step{step}_router_weight.pth', map_location=model.device).transpose(0, 1).to(torch.float16)
         model.cls_head.weight = torch.nn.Parameter(classifier_weight)
@@ -179,15 +175,6 @@ def train():
             correct = 0
             print('-----------------------start new epoch-------------------')
             for steps, batch in enumerate(infer_dataloader):
-                # TODO, add prompts, choosen, rejected
-                # implementation, batch = {k: v.to(device) for k, v in batch.items()}
-                # sources_sequences += batch['sources']
-                # ground_truths += batch['gts']
-                # del batch['sources']
-                # del batch['gts']
-                # batch = to_device(batch, device)
-                # prompt_len = batch['input_ids'].shape[1]
-                # update progress bar
                 labels = batch['gts']
                 input_ids = batch['input_ids']
                 input_ids = input_ids.to('cuda')
@@ -204,13 +191,9 @@ def train():
             print(f'step{step} has an acc of：{acc}')
 
     for i in range(0, len(inference_tasks) - 1):
-        if i != 6:
-            continue
         model, tokenizer = load_model_and_tokenizer(i)
         tokenizer.pad_token = tokenizer.eos_token
 
-        # if i != (len(inference_tasks) - 2):
-        #     continue
         cur_inference_tasks = inference_tasks[0:i+2]
         all_datasets = []
         for inference_task_id in range(len(cur_inference_tasks)):    # evaluation for previous tasks in a single round
@@ -252,7 +235,6 @@ def train():
                                         # sampler=infer_sampler,
                                         shuffle=True,
                                         batch_size=1)
-        # progress_bar = tqdm(total=len(infer_dataloader), leave=True)
 
         # Inference !
         print("***** Start inference *****")

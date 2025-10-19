@@ -50,7 +50,7 @@ feature_layers = 4
 gamma = 10000
 router_weights_path = '/home/yanyue/TRACE_anyssr/router_weights'
 dataset_path = '/home/yanyue/LLM-CL-Benchmark_5000/'
-dataset_cache_path = '/home/yanyue/TRACE/outputs_router'
+dataset_cache_path = '/home/yanyue/TRACE_anyssr/outputs_router'
 
 class NewLlamaForCausalLM(LlamaForCausalLM):
     _tied_weights_keys = ["lm_head.weight"]
@@ -229,23 +229,13 @@ def train():
                 new_activation = model(input_ids).to(torch.float32)
                 labels = torch.tensor(labels)
                 label_onehot = F.one_hot(labels, step + 2).float().to('cuda')
-                
-                # 累积计算自相关和互相关矩阵（你可以根据需要修改这部分）
-                if count == 0:
-                    auto_cor = torch.t(new_activation) @ new_activation
-                    crs_cor = torch.t(new_activation) @ (label_onehot)
-                else:
-                    auto_cor += torch.t(new_activation) @ new_activation
-                    crs_cor += torch.t(new_activation) @ (label_onehot)
-                
-                count += 1
 
                 prev_R = prev_R - prev_R @ new_activation.t() @ torch.pinverse(torch.eye(new_activation.shape[0]).to('cuda') +
                                                                     new_activation @ prev_R @ new_activation.t()) @ new_activation @ prev_R
                 prev_Delta = prev_Delta + prev_R @ new_activation.t() @ (label_onehot - new_activation @ prev_Delta)
             
             print('Calculate new R')
-            new_R = prev_R  # 临时占位，实际应替换为你的新计算逻辑
+            new_R = prev_R
             
             # 计算新的Delta
             new_Delta = prev_Delta
@@ -263,10 +253,26 @@ def train():
         cur_inference_tasks = inference_tasks[0:i+2]
         all_datasets = []
         
-        for inference_task_id in range(len(cur_inference_tasks)):    
-            inference_task = inference_tasks[inference_task_id]
+        if i == 0:
+            for inference_task_id in range(len(cur_inference_tasks)):    
+                inference_task = inference_tasks[inference_task_id]
+                cur_dataset_path = os.path.join(dataset_path, inference_task)
+                
+                # 准备数据
+                train_dataset, eval_dataset, test_dataset = create_prompt_dataset(
+                    -1,
+                    cur_dataset_path,
+                    dataset_cache_path,
+                    42,
+                    distributed=False
+                )
+                
+                train_dataset.answer_dataset = [inference_task_id for _ in train_dataset.answer_dataset]
+                all_datasets.append(train_dataset)
+        else:
+            inference_task = inference_tasks[i+2]
             cur_dataset_path = os.path.join(dataset_path, inference_task)
-            
+                
             # 准备数据
             train_dataset, eval_dataset, test_dataset = create_prompt_dataset(
                 -1,
