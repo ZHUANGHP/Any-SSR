@@ -270,7 +270,7 @@ def train():
                 train_dataset.answer_dataset = [inference_task_id for _ in train_dataset.answer_dataset]
                 all_datasets.append(train_dataset)
         else:
-            inference_task = inference_tasks[i+2]
+            inference_task = inference_tasks[i+1]
             cur_dataset_path = os.path.join(dataset_path, inference_task)
                 
             # 准备数据
